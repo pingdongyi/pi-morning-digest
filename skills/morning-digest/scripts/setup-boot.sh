@@ -2,8 +2,8 @@
 # Install the boot auto-start hook for the morning digest.
 #
 # Places a script in ~/.termux/boot/ (Termux:Boot) that, on boot, re-establishes
-# the morning digest chain if it is not already running. Idempotent: if the
-# scheduler process is alive, it does nothing.
+# the morning digest chain if it is not already running. It checks the scheduler's
+# PID file (kill -0) instead of matching process names, so it is robust.
 #
 # Usage: setup-boot.sh
 
@@ -18,8 +18,12 @@ cat > "$BOOT_DIR/morning-digest.sh" <<BOOT
 # Auto-start the morning digest chain on boot (installed by pi-morning-digest).
 set -euo pipefail
 SCHEDULER="$SCRIPT_DIR/morning-digest-scheduler.sh"
-if pgrep -f "morning-digest-scheduler" >/dev/null 2>&1; then
-  exit 0 # already running
+PID_FILE="\${MORNING_DIGEST_PIDFILE:-\$HOME/.local/state/pi-morning-digest-scheduler.pid}"
+if [ -f "\$PID_FILE" ]; then
+  OLD_PID="\$(cat "\$PID_FILE" 2>/dev/null || true)"
+  if [ -n "\$OLD_PID" ] && kill -0 "\$OLD_PID" 2>/dev/null; then
+    exit 0 # chain is already alive
+  fi
 fi
 termux-job-scheduler --job-id 1 --period-ms 0 --persisted true \
   --network none --battery-not-low false --script "\$SCHEDULER" >/dev/null 2>&1 || true

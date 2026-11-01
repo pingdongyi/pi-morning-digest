@@ -19,6 +19,11 @@ LOG="${MORNING_DIGEST_LOG:-$HOME/.local/state/pi-morning-digest.log}"
 mkdir -p "$(dirname "$LOG")"
 echo "[$(date '+%F %T')] scheduler started" >> "$LOG"
 
+# Record our PID so the boot hook can tell whether the chain is alive.
+PID_FILE="${MORNING_DIGEST_PIDFILE:-$HOME/.local/state/pi-morning-digest-scheduler.pid}"
+mkdir -p "$(dirname "$PID_FILE")"
+echo "$$" > "$PID_FILE"
+
 HOUR=9
 MINUTE=30
 COUNT=10

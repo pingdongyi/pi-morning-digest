@@ -14,6 +14,11 @@
 
 set -euo pipefail
 
+# Start/run log so scheduled executions are observable.
+LOG="${MORNING_DIGEST_LOG:-$HOME/.local/state/pi-morning-digest.log}"
+mkdir -p "$(dirname "$LOG")"
+echo "[$(date '+%F %T')] scheduler started" >> "$LOG"
+
 HOUR=9
 MINUTE=30
 COUNT=10

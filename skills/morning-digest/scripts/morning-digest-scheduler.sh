@@ -1,34 +1,24 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# termux-job-scheduler entry point for a daily morning digest at a fixed time.
+# termux-job-scheduler PERIODIC job: single-check morning digest (非常驻).
 #
-# This is a SELF-RESCHEDULING ONE-SHOT chain: termux-job-scheduler has no
-# "run at HH:MM" option, so each run sleeps until the next HH:MM, sends the
-# digest, then re-schedules this script (one-shot) for the following day.
+# 每次触发: 若当前时间在目标窗口 (HH:MM ± WINDOW) 且今天尚未发送, 则发送晨报;
+# 否则跳过并退出。由 termux-job-scheduler --period-ms 定期调用,
+# 与 codex-supervisor 的实现一致 (周期 job + 单次检查, 无常驻进程)。
 #
 # Usage:
-#   morning-digest-scheduler.sh [--hour H] [--minute M] [--count N] [--job-id ID] [--dry-run]
-#
-# To start, schedule it once (fires immediately, then chains daily):
-#   termux-job-scheduler --job-id morning-digest --period-ms 0 \
-#     --script "$HOME/.../scripts/morning-digest-scheduler.sh" --persisted
+#   morning-digest-scheduler.sh [--hour H] [--minute M] [--count N] [--window M] [--dry-run]
 
-set -euo pipefail
+set -uo pipefail
 
-# Start/run log so scheduled executions are observable.
 LOG="${MORNING_DIGEST_LOG:-$HOME/.local/state/pi-morning-digest.log}"
-mkdir -p "$(dirname "$LOG")"
-echo "[$(date '+%F %T')] scheduler started" >> "$LOG"
-
-# Record our PID so the boot hook can tell whether the chain is alive.
-PID_FILE="${MORNING_DIGEST_PIDFILE:-$HOME/.local/state/pi-morning-digest-scheduler.pid}"
-mkdir -p "$(dirname "$PID_FILE")"
-echo "$$" > "$PID_FILE"
+STATE_FILE="${MORNING_DIGEST_STATE:-$HOME/.local/state/pi-morning-digest.state}"
+mkdir -p "$(dirname "$LOG")" "$(dirname "$STATE_FILE")"
+log() { echo "[$(date '+%F %T')] $*" >> "$LOG"; }
 
 HOUR=9
 MINUTE=30
 COUNT=10
-# termux-job-scheduler requires an INTEGER job id.
-JOB_ID=1
+WINDOW=15          # 目标窗口 ±15 分钟
 DRYRUN=0
 
 while [[ $# -gt 0 ]]; do
@@ -36,7 +26,7 @@ while [[ $# -gt 0 ]]; do
     --hour) HOUR="$2"; shift 2 ;;
     --minute) MINUTE="$2"; shift 2 ;;
     --count) COUNT="$2"; shift 2 ;;
-    --job-id) JOB_ID="$2"; shift 2 ;;
+    --window) WINDOW="$2"; shift 2 ;;
     --dry-run) DRYRUN=1; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
@@ -45,29 +35,33 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIGEST="$SCRIPT_DIR/morning-digest.sh"
 
-NOW=$(date +%s)
 TODAY=$(date +%Y-%m-%d)
+NOW=$(date +%s)
+LAST_SENT="$(cat "$STATE_FILE" 2>/dev/null || true)"
+
+# 今天已发送 -> 跳过 (防重复)
+if [ "$LAST_SENT" = "$TODAY" ]; then
+  log "today already sent, skip (now=$(date '+%H:%M'))"
+  echo "already-sent"
+  exit 0
+fi
+
 HHMM=$(printf '%02d:%02d' "$HOUR" "$MINUTE")
-
-# Next occurrence of HH:MM (today if still ahead, otherwise tomorrow).
 TARGET=$(date -d "$TODAY $HHMM" +%s 2>/dev/null || echo "$NOW")
-if (( TARGET <= NOW )); then
-  TARGET=$(date -d "tomorrow $HHMM" +%s 2>/dev/null || echo "$NOW")
-fi
-SLEEP_SECS=$((TARGET - NOW))
+WIN_START=$((TARGET - WINDOW * 60))
+WIN_END=$((TARGET + WINDOW * 60))
 
-echo "[morning-digest] next digest at ${HHMM} daily; sleeping ${SLEEP_SECS}s" >&2
-sleep "$SLEEP_SECS"
-
-if [[ $DRYRUN -eq 1 ]]; then
-  echo "[morning-digest] (dry-run) would send digest + re-schedule job '$JOB_ID'" >&2
-  bash "$DIGEST" --dry-run --count "$COUNT"
+if [ "$NOW" -ge "$WIN_START" ] && [ "$NOW" -le "$WIN_END" ]; then
+  if [ "$DRYRUN" -eq 1 ]; then
+    bash "$DIGEST" --dry-run --count "$COUNT" || true
+    echo "would-send (window $HHMM ±${WINDOW}m)"
+  else
+    bash "$DIGEST" --count "$COUNT" || true
+    printf '%s' "$TODAY" > "$STATE_FILE"
+    log "sent digest at $(date '+%H:%M')"
+    echo "sent"
+  fi
 else
-  bash "$DIGEST" --count "$COUNT" || true
-fi
-
-# Re-schedule the next one-shot for the following day.
-if [[ $DRYRUN -eq 0 ]] && command -v termux-job-scheduler >/dev/null 2>&1; then
-  termux-job-scheduler --job-id "$JOB_ID" --period-ms 0 --persisted true --network none --battery-not-low false --script "$0" >/dev/null 2>&1 || true
-  echo "[morning-digest] re-scheduled next run (job '$JOB_ID')" >&2
+  log "not in window (now=$(date '+%H:%M') target=$HHMM ±${WINDOW}m)"
+  echo "not-in-window"
 fi

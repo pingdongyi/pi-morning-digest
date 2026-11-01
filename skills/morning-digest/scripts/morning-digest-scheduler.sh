@@ -63,6 +63,6 @@ fi
 
 # Re-schedule the next one-shot for the following day.
 if [[ $DRYRUN -eq 0 ]] && command -v termux-job-scheduler >/dev/null 2>&1; then
-  termux-job-scheduler --job-id "$JOB_ID" --period-ms 0 --persisted true --script "$0" >/dev/null 2>&1 || true
+  termux-job-scheduler --job-id "$JOB_ID" --period-ms 0 --persisted true --network none --battery-not-low false --script "$0" >/dev/null 2>--script "$0" >/dev/null 2>&11 || true
   echo "[morning-digest] re-scheduled next run (job '$JOB_ID')" >&2
 fi

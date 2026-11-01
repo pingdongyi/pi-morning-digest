@@ -3,7 +3,7 @@
 A [Pi](https://pi.dev) package for a **morning digest (晨间简报)**:
 
 - **Skill** `morning-digest` — asks the model to compose today's digest
-  (international news + device context) and present it, or push it as a notification.
+  (international news) and present it, or push it as a notification.
 - **Script** `scripts/morning-digest.sh` — a headless digest that fetches fresh
   headlines and sends a `termux-notification`. Great for scheduled delivery.
 
@@ -68,9 +68,7 @@ termux-job-scheduler --cancel --job-id 1        # stop the chain
 | --- | --- | --- |
 | `--count N` | `8` | Number of headlines |
 | `--title TEXT` | `🌅 晨间简报` | Notification title |
-| `--no-battery` | off | Skip battery info |
 | `--no-news` | off | Skip news headlines |
-| `--no-ip` | off | Skip IP country |
 | `--dry-run` | off | Print instead of sending |
 
 ## Notes

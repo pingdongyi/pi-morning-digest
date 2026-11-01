@@ -1,31 +1,26 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Morning digest: fetch today's international news + device info and send it as
-# a Termux notification. Designed to run headlessly (e.g. via termux-job-scheduler).
+# Morning digest: fetch today's international news and send it as a Termux
+# notification. A pure news briefing. Designed to run headlessly
+# (e.g. via termux-job-scheduler).
 #
 # Usage: morning-digest.sh [options]
 #   --count N      number of headlines (default 8)
 #   --title TEXT   notification title (default "🌅 晨间简报")
-#   --no-battery   skip battery/device info
-#   --no-news      skip news headlines (device info only)
-#   --no-ip        skip IP country
+#   --no-news      skip news headlines
 #   --dry-run      print the digest instead of sending a notification
 
 set -euo pipefail
 
 COUNT=8
 TITLE="🌅 晨间简报"
-BATTERY=1
 NEWS=1
-IPINFO=1
 DRYRUN=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --count) COUNT="$2"; shift 2 ;;
     --title) TITLE="$2"; shift 2 ;;
-    --no-battery) BATTERY=0; shift ;;
     --no-news) NEWS=0; shift ;;
-    --no-ip) IPINFO=0; shift ;;
     --dry-run) DRYRUN=1; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
@@ -45,21 +40,6 @@ if [[ $NEWS -eq 1 ]]; then
     [[ -n "$line" ]] && LINES+=("$line")
   done <<< "$NEWS_TEXT"
   LINES+=("")
-fi
-
-# --- Device info ---
-if [[ $BATTERY -eq 1 ]]; then
-  if command -v termux-battery-status >/dev/null 2>&1; then
-    BATT="$(termux-battery-status 2>/dev/null | sed -n 's/.*"percentage": *\([0-9]*\).*/\1/p' | head -1)"
-    [[ -n "$BATT" ]] && LINES+=("🔋 电量 ${BATT}%")
-  fi
-fi
-
-if [[ $IPINFO -eq 1 ]]; then
-  # Reuse the ip-country package's trace endpoint for the caller's own country.
-  TRACE="$(curl -s --max-time 8 https://chatgpt.com/cdn-cgi/trace 2>/dev/null || true)"
-  LOC="$(printf '%s\n' "$TRACE" | sed -n 's/^loc=//p' | head -1)"
-  [[ -n "$LOC" ]] && LINES+=("📍 $LOC")
 fi
 
 CONTENT="$(printf '%s\n' "$DATE")"

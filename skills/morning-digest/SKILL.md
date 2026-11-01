@@ -6,9 +6,8 @@ compatibility: Requires curl, and termux-notification for the push option.
 
 # Morning Digest (晨间简报)
 
-Compose a friendly morning digest for today: international news headlines plus a
-little device context, then present it (and optionally push it as a device
-notification).
+Compose a friendly morning news briefing for today: international headlines, then
+present it (and optionally push it as a device notification).
 
 ## When to use
 
@@ -37,15 +36,9 @@ Run the fetch script:
 It prints a numbered list `N. <Headline> - <Source>`. If it fails or returns an
 error, mention the news feed is unavailable and continue with the rest of the digest.
 
-### 3. Gather device context (optional)
+### 3. Compose the briefing
 
-- Battery: `termux-battery-status` (percent).
-- Your IP country: use the `ip_country` tool (from the ip-country package) or the
-  Cloudflare trace endpoint.
-
-### 4. Compose the digest
-
-Present a friendly Chinese digest, e.g.:
+Present a friendly Chinese morning news briefing, e.g.:
 
 ```
 🌅 晨间简报 · 2026-11-01 星期六
@@ -54,13 +47,12 @@ Present a friendly Chinese digest, e.g.:
 1. <headline> - <source>
 2. <headline> - <source>
 ...
-
-🔋 电量 85% · 📍 SG
 ```
 
-Greet with a time-appropriate opener (早上好/早安). Keep it concise.
+Greet with a time-appropriate opener (早上好/早安). Keep it concise and focused
+on the news only.
 
-### 5. Deliver
+### 4. Deliver
 
 - By default present the digest in chat.
 - If the user asks to **push / 推送 / 通知**: send it with `termux-notification`:

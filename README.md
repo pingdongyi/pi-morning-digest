@@ -32,20 +32,35 @@ Send it as a notification:
 scripts/morning-digest.sh --count 10
 ```
 
-### Schedule it daily (Termux)
+### Schedule it daily at a fixed time (Termux API)
 
-Using the Termux job scheduler (runs daily from the moment you schedule it):
-
-```bash
-termux-job-scheduler --job-id morning-digest --period-ms 86400000 \
-  --script "$HOME/.pi/agent/git/github.com/pingdongyi/pi-morning-digest/skills/morning-digest/scripts/morning-digest.sh"
-```
-
-Or with cron, to run at a specific time (e.g. 07:30) instead of every 24h:
+`termux-job-scheduler` only supports intervals, not "run at HH:MM". To align the
+digest to a fixed time (e.g. **09:30**), use the self-rescheduling one-shot chain:
 
 ```bash
-30 7 * * * /path/to/scripts/morning-digest.sh --count 10
+# Start once — it fires immediately, waits until the next 09:30, sends the digest,
+# then re-schedules itself for the following day.
+termux-job-scheduler --job-id morning-digest --period-ms 0 --persisted \
+  --script "$HOME/.pi/agent/git/github.com/pingdongyi/pi-morning-digest/skills/morning-digest/scripts/morning-digest-scheduler.sh"
 ```
+
+The scheduler (`morning-digest-scheduler.sh`) sleeps until the next `HH:MM`
+(default 09:30), sends the digest, then re-schedules the next one-shot. So **each
+execution re-schedules the next** — that is the trade-off for exact time-of-day
+with the Termux job scheduler.
+
+Options: `--hour H --minute M --count N --job-id ID`.
+
+Manage it:
+
+```bash
+termux-job-scheduler --pending                  # list jobs
+termux-job-scheduler --cancel --job-id morning-digest   # stop the chain
+```
+
+> Caveat: the chain sleeps for up to ~24h between runs. If the device kills the
+> background process, the chain stops; re-run the start command to resume. For a
+> more robust daily delivery, use cron (below) instead.
 
 ## Options
 

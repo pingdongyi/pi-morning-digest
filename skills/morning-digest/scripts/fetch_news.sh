@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 # Fetch today's international news headlines from Google News RSS.
 # Usage: fetch_news.sh [--world] [--count N]
 

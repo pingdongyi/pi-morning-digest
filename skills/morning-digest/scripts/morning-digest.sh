@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 # Morning digest: fetch today's international news + device info and send it as
 # a Termux notification. Designed to run headlessly (e.g. via termux-job-scheduler).
 #

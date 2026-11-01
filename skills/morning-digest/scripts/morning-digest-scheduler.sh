@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 # termux-job-scheduler entry point for a daily morning digest at a fixed time.
 #
 # This is a SELF-RESCHEDULING ONE-SHOT chain: termux-job-scheduler has no

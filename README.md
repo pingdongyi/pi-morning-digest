@@ -40,7 +40,7 @@ digest to a fixed time (e.g. **09:30**), use the self-rescheduling one-shot chai
 ```bash
 # Start once — it fires immediately, waits until the next 09:30, sends the digest,
 # then re-schedules itself for the following day.
-termux-job-scheduler --job-id morning-digest --period-ms 0 --persisted \
+termux-job-scheduler --job-id 1 --period-ms 0 --persisted true \
   --script "$HOME/.pi/agent/git/github.com/pingdongyi/pi-morning-digest/skills/morning-digest/scripts/morning-digest-scheduler.sh"
 ```
 
@@ -49,13 +49,13 @@ The scheduler (`morning-digest-scheduler.sh`) sleeps until the next `HH:MM`
 execution re-schedules the next** — that is the trade-off for exact time-of-day
 with the Termux job scheduler.
 
-Options: `--hour H --minute M --count N --job-id ID`.
+Options: `--hour H --minute M --count N --job-id ID` (job-id must be an **integer**).
 
 Manage it:
 
 ```bash
 termux-job-scheduler --pending                  # list jobs
-termux-job-scheduler --cancel --job-id morning-digest   # stop the chain
+termux-job-scheduler --cancel --job-id 1        # stop the chain
 ```
 
 > Caveat: the chain sleeps for up to ~24h between runs. If the device kills the

@@ -17,7 +17,8 @@ set -euo pipefail
 HOUR=9
 MINUTE=30
 COUNT=10
-JOB_ID=morning-digest
+# termux-job-scheduler requires an INTEGER job id.
+JOB_ID=1
 DRYRUN=0
 
 while [[ $# -gt 0 ]]; do
@@ -57,6 +58,6 @@ fi
 
 # Re-schedule the next one-shot for the following day.
 if [[ $DRYRUN -eq 0 ]] && command -v termux-job-scheduler >/dev/null 2>&1; then
-  termux-job-scheduler --job-id "$JOB_ID" --period-ms 0 --script "$0" --persisted >/dev/null 2>&1 || true
+  termux-job-scheduler --job-id "$JOB_ID" --period-ms 0 --persisted true --script "$0" >/dev/null 2>&1 || true
   echo "[morning-digest] re-scheduled next run (job '$JOB_ID')" >&2
 fi

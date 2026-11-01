@@ -58,9 +58,21 @@ termux-job-scheduler --pending                  # list jobs
 termux-job-scheduler --cancel --job-id 1        # stop the chain
 ```
 
-> Caveat: the chain sleeps for up to ~24h between runs. If the device kills the
-> background process, the chain stops; re-run the start command to resume. For a
-> more robust daily delivery, use cron (below) instead.
+### Auto-start on boot (Termux:Boot)
+
+Install a boot hook that re-establishes the chain after a reboot. It checks the
+scheduler's PID file (`kill -0`) and only re-schedules when the chain is dead:
+
+```bash
+scripts/setup-boot.sh
+```
+
+This writes `~/.termux/boot/morning-digest.sh`, which Termux:Boot runs on boot.
+Requires the **Termux:Boot** app. The hook is idempotent: it never double-schedules.
+
+> Caveat: the chain sleeps up to ~24h between runs. If the device kills the
+> background process mid-day (without a reboot), the chain stops until the next
+> boot re-schedules it. Re-run the start command to resume immediately.
 
 ## Options
 

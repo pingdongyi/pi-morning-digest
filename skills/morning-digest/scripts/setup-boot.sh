@@ -17,7 +17,7 @@ MIN_MS=900000
 # 注册周期 job (幂等覆盖同 job-id)
 termux-job-scheduler --job-id "$JOB_ID" --cancel >/dev/null 2>&1 || true
 termux-job-scheduler --job-id "$JOB_ID" --period-ms "$PERIOD_MS" --persisted true \
-  --network none --battery-not-low false --script "$SCHEDULER" >/dev/null 2>&1 \
+  --network any --battery-not-low false --script "$SCHEDULER" >/dev/null 2>&1 \
   && echo "[ok] 已注册周期任务 job #$JOB_ID (每 $((PERIOD_MS/1000))s 单次检查)" \
   || echo "[warn] termux-job-scheduler 注册失败"
 
@@ -28,7 +28,7 @@ cat > "$BOOT_DIR/morning-digest.sh" <<BOOT
 # Re-register morning digest periodic job (installed by pi-morning-digest).
 set -uo pipefail
 termux-job-scheduler --job-id $JOB_ID --period-ms $PERIOD_MS --persisted true \
-  --network none --battery-not-low false --script "$SCHEDULER" >/dev/null 2>&1 || true
+  --network any --battery-not-low false --script "$SCHEDULER" >/dev/null 2>&1 || true
 BOOT
 chmod +x "$BOOT_DIR/morning-digest.sh"
 echo "[ok] 已安装应用启动恢复: $BOOT_DIR/morning-digest.sh"

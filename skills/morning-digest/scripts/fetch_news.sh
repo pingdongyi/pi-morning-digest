@@ -28,7 +28,7 @@ done
 TMPFILE="$(mktemp)"
 trap 'rm -f "$TMPFILE"' EXIT
 
-if ! curl -sL --max-time 20 "$FEED" -o "$TMPFILE"; then
+if ! curl -sL --retry 2 --retry-delay 3 --max-time 20 "$FEED" -o "$TMPFILE"; then
   echo "ERROR: failed to fetch news feed (network issue?)" >&2
   exit 1
 fi

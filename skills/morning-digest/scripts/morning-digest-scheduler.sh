@@ -56,10 +56,20 @@ if [ "$NOW" -ge "$WIN_START" ] && [ "$NOW" -le "$WIN_END" ]; then
     bash "$DIGEST" --dry-run --count "$COUNT" || true
     echo "would-send (window $HHMM ±${WINDOW}m)"
   else
-    bash "$DIGEST" --count "$COUNT" || true
-    printf '%s' "$TODAY" > "$STATE_FILE"
-    log "sent digest at $(date '+%H:%M')"
-    echo "sent"
+    DIGEST_OUTPUT="$(bash "$DIGEST" --count "$COUNT" 2>&1)"
+    DIGEST_EXIT=$?
+    if [ "$DIGEST_EXIT" -eq 0 ]; then
+      printf '%s' "$TODAY" > "$STATE_FILE"
+      log "sent digest at $(date '+%H:%M')"
+      echo "sent"
+    elif [ "$DIGEST_EXIT" -eq 2 ]; then
+      printf '%s' "$TODAY" > "$STATE_FILE"
+      log "PARTIAL: digest sent but news fetch failed at $(date '+%H:%M')"
+      echo "partial"
+    else
+      log "FAILED: digest exited $DIGEST_EXIT: $DIGEST_OUTPUT"
+      echo "failed"
+    fi
   fi
 else
   log "not in window (now=$(date '+%H:%M') target=$HHMM ±${WINDOW}m)"

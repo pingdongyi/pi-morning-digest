@@ -33,8 +33,14 @@ DATE="$(date '+%Y-%m-%d %H:%M')"
 LINES=()
 
 # --- News ---
+FETCH_FAILED=0
 if [[ $NEWS -eq 1 ]]; then
-  NEWS_TEXT="$(bash "$FETCH" --count "$COUNT" 2>/dev/null || echo "（新闻获取失败）")"
+  if NEWS_TEXT="$(bash "$FETCH" --count "$COUNT" 2>/dev/null)"; then
+    FETCH_FAILED=0
+  else
+    NEWS_TEXT="（新闻获取失败）"
+    FETCH_FAILED=1
+  fi
   LINES+=("📰 今日国际新闻")
   while IFS= read -r line; do
     [[ -n "$line" ]] && LINES+=("$line")
@@ -54,8 +60,18 @@ if [[ $DRYRUN -eq 1 ]]; then
 fi
 
 if command -v termux-notification >/dev/null 2>&1; then
-  printf '%s\n' "$CONTENT" | termux-notification -t "$TITLE" --priority high --id morning-digest
-  echo "sent notification: $TITLE"
+  if printf '%s\n' "$CONTENT" | termux-notification -t "$TITLE" --priority high --id morning-digest; then
+    if [ "$FETCH_FAILED" -eq 1 ]; then
+      echo "sent notification: $TITLE (news fetch failed)"
+      exit 2
+    else
+      echo "sent notification: $TITLE"
+      exit 0
+    fi
+  else
+    echo "ERROR: termux-notification failed" >&2
+    exit 1
+  fi
 else
   echo "termux-notification not found; digest:" >&2
   printf '%s\n' "$CONTENT" >&2

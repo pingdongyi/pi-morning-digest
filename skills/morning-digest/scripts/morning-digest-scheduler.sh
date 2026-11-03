@@ -63,8 +63,10 @@ if [ "$NOW" -ge "$WIN_START" ] && [ "$NOW" -le "$WIN_END" ]; then
       log "sent digest at $(date '+%H:%M')"
       echo "sent"
     elif [ "$DIGEST_EXIT" -eq 2 ]; then
-      printf '%s' "$TODAY" > "$STATE_FILE"
-      log "PARTIAL: digest sent but news fetch failed at $(date '+%H:%M')"
+      # News fetch failed but notification was still sent. Do NOT mark the day
+      # as sent: a later job run (still inside the window) can retry and replace
+      # the partial notification with a full one once the network recovers.
+      log "PARTIAL: digest sent but news fetch failed at $(date '+%H:%M'); will retry in-window"
       echo "partial"
     else
       log "FAILED: digest exited $DIGEST_EXIT: $DIGEST_OUTPUT"

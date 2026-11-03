@@ -1,6 +1,6 @@
 {
   "name": "pi-morning-digest",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Pi skill + script for a morning digest (晨间简报): today's international news + device context, presentable in chat or pushed as a Termux notification.",
   "keywords": ["pi-package", "pi", "skill", "morning", "digest", "news", "notification"],
   "license": "MIT",
